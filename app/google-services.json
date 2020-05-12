@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "341361277564",
+    "firebase_url": "https://sakuta-4f974.firebaseio.com",
+    "project_id": "sakuta-4f974",
+    "storage_bucket": "sakuta-4f974.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:341361277564:android:b66088d2579bf55abae7f9",
+        "android_client_info": {
+          "package_name": "com.example.sakuta"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "341361277564-u7k7o183imvom8sm6g210hjfkbfhnene.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-GUoQ7MbvLc7pzt74S9-0T3Hcfko9lFA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "341361277564-u7k7o183imvom8sm6g210hjfkbfhnene.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
