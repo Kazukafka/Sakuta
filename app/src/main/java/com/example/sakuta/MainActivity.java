@@ -26,6 +26,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
 
         FacebookSdk.sdkInitialize(getApplicationContext());
@@ -34,6 +35,8 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
         info = (TextView)findViewById(R.id.info);
+
+
         loginButton = (LoginButton)findViewById(R.id.login_button);
         final Button button = (Button) findViewById(R.id.bbb);
         button.setVisibility(View.GONE);
@@ -43,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Intent intent = new Intent(getApplication(), com.example.sakuta.CalcActivity.class);
                 startActivity(intent);
+
             }
         });
 
@@ -54,8 +58,10 @@ public class MainActivity extends AppCompatActivity {
         });
 
         loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+
             @Override
             public void onSuccess(LoginResult loginResult) {
+
                 info.setText("User ID: " + loginResult.getAccessToken().getUserId() + "\n" + "Auth Token: " + loginResult.getAccessToken().getToken());
                 button.setVisibility(View.VISIBLE);
             }
@@ -65,15 +71,19 @@ public class MainActivity extends AppCompatActivity {
                 info.setText("Login attempt canceled.");
             }
 
+
             @Override
             public void onError(FacebookException e) {
                 info.setText("Login attempt failed.");
             }
+
+
         });
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
         super.onActivityResult(requestCode , resultCode , data);
 
         callbackManager.onActivityResult(requestCode, resultCode, data);

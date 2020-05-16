@@ -1,6 +1,9 @@
 package com.example.sakuta;
 
 import android.app.Activity;
+import android.content.ContentValues;
+import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.text.Html;
 import android.text.method.ScrollingMovementMethod;
@@ -13,34 +16,33 @@ import java.text.NumberFormat;
 
 public class CalcActivity extends Activity {
 
+    String sin_inverse, cos_inverse, tan_inverse, RorD = "RAD", function;
+    String num_one = "", num_two = "", sCalculation = "", sAnswer = "", cur_operator = "", previous_ans = "";
     TextView calculation, answer;
-    String sCalculation = "", sAnswer = "", number_one = "", number_two = "", current_oprator = "", prev_ans = "";
-    String RorD = "RAD", sin_inv, cos_inv, tan_inv, function;
-    Double Result = 0.0, numberOne = 0.0, numberTwo = 0.0, temp = 0.0;
-    Boolean dot_present = false, number_allow = true, root_present = false, invert_allow = true, power_present = false;
-    Boolean factorial_present = false, constant_present = false, function_present = false, value_inverted = false;
-    //we need to reformat answer
-    NumberFormat format, longformate;
+    Double Result = 0.0, temp = 0.0, numberOne = 0.0, numberTwo = 0.0;
+    Boolean num_allow = true, inv_allow = true, power_pres = false, dot_pres = false, root_pres = false;
+    Boolean function_pres = false, factorial_pres = false, constant_pres = false, inverted_value = false;
+    NumberFormat longformat, format;
+    Button detaBaseButton;
+
+    //MyOpenHelper helper = new MyOpenHelper(this);
+    //final SQLiteDatabase db = helper.getWritableDatabase();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_calc);
+
+        detaBaseButton = (Button) findViewById(R.id.dbbutton);
+
         calculation = findViewById(R.id.calculation);
-        //set movement to the text view
         calculation.setMovementMethod(new ScrollingMovementMethod());
-        //initialize answer
         answer = findViewById(R.id.answer);
-
-        //we set the answer upto four decimal
+        longformat = new DecimalFormat("0.#E0");
         format = new DecimalFormat("#.####");
-        //we need to reformat answer if it's long
-        longformate = new DecimalFormat("0.#E0");
-
-        sin_inv = String.valueOf(Html.fromHtml("sin<sup><small>-1</small></sup>"));
-        cos_inv = String.valueOf(Html.fromHtml("cos<sup><small>-1</small></sup>"));
-        tan_inv = String.valueOf(Html.fromHtml("tan<sup><small>-1</small></sup>"));
-
+        sin_inverse = String.valueOf(Html.fromHtml("sin<sup><small>-1</small></sup>"));
+        cos_inverse = String.valueOf(Html.fromHtml("cos<sup><small>-1</small></sup>"));
+        tan_inverse = String.valueOf(Html.fromHtml("tan<sup><small>-1</small></sup>"));
 
         final Button btn_RorD = findViewById(R.id.btn_RorD);
         btn_RorD.setOnClickListener(new View.OnClickListener() {
@@ -52,62 +54,62 @@ public class CalcActivity extends Activity {
             }
         });
 
+        detaBaseButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                Intent dbIntent = new Intent(CalcActivity.this,
+                        SubActivity.class);
+                startActivity(dbIntent);
+
+            }
+        });
     }
 
+
     public void onClickNumber(View v) {
-        //we need to find which button is pressed
-        if (number_allow) {
+        if (num_allow) {
             Button bn = (Button) v;
             sCalculation += bn.getText();
-            number_one += bn.getText();
-            numberOne = Double.parseDouble(number_one);
+            num_one += bn.getText();
+            numberOne = Double.parseDouble(num_one);
 
-            if (function_present) {
+
+            if (function_pres) {
                 calculateFunction(function);
                 return;
             }
-            //check root is present
-            if (root_present) {
+            if (root_pres) {
                 numberOne = Math.sqrt(numberOne);
             }
-            switch (current_oprator) {
-
-                case ""://if current oprator is null
-                    if (power_present) {
+            switch (cur_operator) {
+                case "":
+                    if (power_pres) {
                         temp = Result + Math.pow(numberTwo, numberOne);
                     } else {
                         temp = Result + numberOne;
                     }
                     break;
-
                 case "+":
-                    if (power_present) {
+
+                    if (power_pres) {
                         temp = Result + Math.pow(numberTwo, numberOne);
                     } else {
                         temp = Result + numberOne;
                     }
                     break;
-
                 case "-":
-                    if (power_present) {
+                    if (power_pres) {
                         temp = Result - Math.pow(numberTwo, numberOne);
+
                     } else {
                         temp = Result - numberOne;
                     }
                     break;
-
-                case "x":
-                    if (power_present) {
-                        temp = Result * Math.pow(numberTwo, numberOne);
-                    } else {
-                        temp = Result * numberOne;
-                    }
-                    break;
-
                 case "/":
                     try {
-                        // divided by 0 cause execption
-                        if (power_present) {
+
+                        if (power_pres) {
                             temp = Result / Math.pow(numberTwo, numberOne);
                         } else {
                             temp = Result / numberOne;
@@ -116,7 +118,15 @@ public class CalcActivity extends Activity {
                         sAnswer = e.getMessage();
                     }
                     break;
+                case "x":
+                    if (power_pres) {
+                        temp = Result * Math.pow(numberTwo, numberOne);
+                    } else {
+                        temp = Result * numberOne;
 
+
+                    }
+                    break;
             }
             sAnswer = format.format(temp).toString();
             updateCalculation();
@@ -125,32 +135,31 @@ public class CalcActivity extends Activity {
 
     public void onClickOprator(View v) {
         Button ob = (Button) v;
-        //if sAnswer is null means no calculation needed
+
         if (sAnswer != "") {
-            //we check last char is operator or not
-            if (current_oprator != "") {
-                char c = getcharfromLast(sCalculation, 2);// 2 is the char from last because our las char is " "
+            if (cur_operator != "") {
+                char c = getcharfromLast(sCalculation, 2);
                 if (c == '+' || c == '-' || c == 'x' || c == '/') {
                     sCalculation = sCalculation.substring(0, sCalculation.length() - 3);
                 }
             }
             sCalculation = sCalculation + "\n" + ob.getText() + " ";
-            number_one = "";
+            num_one = "";
             Result = temp;
-            current_oprator = ob.getText().toString();
+            cur_operator = ob.getText().toString();
             updateCalculation();
-            //when operator click dot is not present in number_one
-            number_two = "";
+
+            dot_pres = false;
+            constant_pres = false;
+            function_pres = false;
+            inverted_value = false;
+            num_allow = true;
+            root_pres = false;
+            num_two = "";
             numberTwo = 0.0;
-            dot_present = false;
-            number_allow = true;
-            root_present = false;
-            invert_allow = true;
-            power_present = false;
-            factorial_present = false;
-            constant_present = false;
-            function_present = false;
-            value_inverted = false;
+            inv_allow = true;
+            power_pres = false;
+            factorial_pres = false;
         }
 
     }
@@ -163,86 +172,110 @@ public class CalcActivity extends Activity {
     public void onClickClear(View v) {
         cleardata();
     }
+    public void onDotClick(View view) {
 
+        if (!dot_pres) {
+
+            if (num_one.length() == 0) {
+                num_one = "0.";
+                sCalculation += "0.";
+                sAnswer = "0.";
+                dot_pres = true;
+                updateCalculation();
+            } else {
+                num_one += ".";
+                sCalculation += ".";
+
+                sAnswer += ".";
+                dot_pres = true;
+                updateCalculation();
+            }
+        }
+    }
     public void cleardata() {
         sCalculation = "";
         sAnswer = "";
-        current_oprator = "";
-        number_one = "";
-        number_two = "";
-        prev_ans = "";
+
+        cur_operator = "";
+        num_one = "";
+        num_two = "";
+        previous_ans = "";
         Result = 0.0;
         numberOne = 0.0;
+
         numberTwo = 0.0;
         temp = 0.0;
         updateCalculation();
-        dot_present = false;
-        number_allow = true;
-        root_present = false;
-        invert_allow = true;
-        power_present = false;
-        factorial_present = false;
-        function_present = false;
-        constant_present = false;
-        value_inverted = false;
-    }
+        dot_pres = false;
+        num_allow = true;
+        root_pres = false;
+        inv_allow = true;
 
+        power_pres = false;
+        factorial_pres = false;
+        function_pres = false;
+
+        constant_pres = false;
+        inverted_value = false;
+    }
     public void updateCalculation() {
         calculation.setText(sCalculation);
         answer.setText(sAnswer);
     }
-
-    public void onDotClick(View view) {
-        //create boolean dot_present check if dot is present or not.
-        if (!dot_present) {
-            //check length of numberone
-            if (number_one.length() == 0) {
-                number_one = "0.";
-                sCalculation += "0.";
-                sAnswer = "0.";
-                dot_present = true;
-                updateCalculation();
-            } else {
-                number_one += ".";
-                sCalculation += ".";
-                sAnswer += ".";
-                dot_present = true;
-                updateCalculation();
-            }
-        }
-
-    }
-
     public void onClickEqual(View view) {
         showresult();
     }
 
+    //only after clikc"=" the equation will be saved
     public void showresult() {
-        if (sAnswer != "" && sAnswer != prev_ans) {
+        if (sAnswer != "" && sAnswer != previous_ans) {
             sCalculation += "\n= " + sAnswer + "\n----------\n" + sAnswer + " ";
-            number_one = "";
-            number_two = "";
+            num_one = "";
+            num_two = "";
             numberTwo = 0.0;
+
             numberOne = 0.0;
             Result = temp;
-            prev_ans = sAnswer;
+
+
+            previous_ans = sAnswer;
+
+
             updateCalculation();
-            //we  don't allow to edit our ans so
-            dot_present = true;
-            power_present = false;
-            number_allow = false;
-            factorial_present = false;
-            constant_present = false;
-            function_present = false;
-            value_inverted = false;
+
+
+
+            dot_pres = true;
+            power_pres = false;
+            num_allow = false;
+
+            factorial_pres = false;
+
+
+            constant_pres = false;
+            function_pres = false;
+            inverted_value = false;
+
+
+            /*
+            //long millis = System.currentTimeMillis();
+            String equation = sCalculation;
+            //String TimeStanp = Long.toString(millis);
+            String TimeStamp = "Oppai";
+            ContentValues insertValues = new ContentValues();
+            insertValues.put("equation", equation);
+            insertValues.put("TimeStamp", TimeStamp);
+            long id = db.insert("calcBB", equation, insertValues);
+
+             */
+
+
         }
     }
-
     public void onModuloClick(View view) {
         if (sAnswer != "" && getcharfromLast(sCalculation, 1) != ' ') {
             sCalculation += "% ";
-            //value of temp will change according to the operator
-            switch (current_oprator) {
+            switch (cur_operator) {
                 case "":
                     temp = temp / 100;
                     break;
@@ -252,9 +285,6 @@ public class CalcActivity extends Activity {
                 case "-":
                     temp = Result - ((Result * numberOne) / 100);
                     break;
-                case "x":
-                    temp = Result * (numberOne / 100);
-                    break;
                 case "/":
                     try {
                         temp = Result / (numberOne / 100);
@@ -262,59 +292,56 @@ public class CalcActivity extends Activity {
                         sAnswer = e.getMessage();
                     }
                     break;
+                case "x":
+                    temp = Result * (numberOne / 100);
+                    break;
             }
             sAnswer = format.format(temp).toString();
             if (sAnswer.length() > 9) {
-                sAnswer = longformate.format(temp).toString();
+                sAnswer = longformat.format(temp).toString();
             }
             Result = temp;
-            //now we show the result
             showresult();
 
         }
     }
-
     public void onPorMClick(View view) {
-        if (invert_allow) {
+        if (inv_allow) {
             if (sAnswer != "" && getcharfromLast(sCalculation, 1) != ' ') {
                 numberOne = numberOne * (-1);
-                number_one = format.format(numberOne).toString();
-                switch (current_oprator) {
+                num_one = format.format(numberOne).toString();
+                switch (cur_operator) {
                     case "":
                         temp = numberOne;
-                        sCalculation = number_one;
+                        sCalculation = num_one;
                         break;
                     case "+":
                         temp = Result + numberOne;
-                        //we need to add - sign in the starting of the string
                         removeuntilchar(sCalculation, ' ');
-                        sCalculation += number_one;
+                        sCalculation += num_one;
                         break;
                     case "-":
                         temp = Result - numberOne;
-                        //we need to add - sign in the starting of the string
                         removeuntilchar(sCalculation, ' ');
-                        sCalculation += number_one;
-                        break;
-                    case "*":
-                        temp = Result * numberOne;
-                        //we need to add - sign in the starting of the string
-                        removeuntilchar(sCalculation, ' ');
-                        sCalculation += number_one;
+                        sCalculation += num_one;
                         break;
                     case "/":
                         try {
                             temp = Result / numberOne;
-                            //we need to add - sign in the starting of the string
                             removeuntilchar(sCalculation, ' ');
-                            sCalculation += number_one;
+                            sCalculation += num_one;
                         } catch (Exception e) {
                             sAnswer = e.getMessage();
                         }
                         break;
+                    case "*":
+                        temp = Result * numberOne;
+                        removeuntilchar(sCalculation, ' ');
+                        sCalculation += num_one;
+                        break;
                 }
                 sAnswer = format.format(temp).toString();
-                value_inverted = value_inverted ? false : true;
+                inverted_value = inverted_value ? false : true;
                 updateCalculation();
             }
         }
@@ -323,7 +350,6 @@ public class CalcActivity extends Activity {
     public void removeuntilchar(String str, char chr) {
         char c = getcharfromLast(str, 1);
         if (c != chr) {
-            //remove last char
             str = removechar(str, 1);
             sCalculation = str;
             updateCalculation();
@@ -333,12 +359,11 @@ public class CalcActivity extends Activity {
 
     public String removechar(String str, int i) {
         char c = str.charAt(str.length() - i);
-        //we need to check if dot is removed or not
-        if (c == '.' && !dot_present) {
-            dot_present = false;
+        if (c == '.' && !dot_pres) {
+            dot_pres = false;
         }
         if (c == '^') {
-            power_present = false;
+            power_pres = false;
         }
         if (c == ' ') {
             return str.substring(0, str.length() - (i - 1));
@@ -348,30 +373,28 @@ public class CalcActivity extends Activity {
 
     public void onRootClick(View view) {
         Button root = (Button) view;
-        //first we check if root is present or not
-        if (sAnswer == "" && Result == 0 && !root_present && !function_present) {
+        if (sAnswer == "" && Result == 0 && !root_pres && !function_pres) {
             sCalculation = root.getText().toString();
-            root_present = true;
-            invert_allow = false;
+            root_pres = true;
+            inv_allow = false;
             updateCalculation();
-        } else if (getcharfromLast(sCalculation, 1) == ' ' && current_oprator != "" && !root_present) {
+        } else if (getcharfromLast(sCalculation, 1) == ' ' && cur_operator != "" && !root_pres) {
             sCalculation += root.getText().toString();
-            root_present = true;
-            invert_allow = false;
+            root_pres = true;
+            inv_allow = false;
             updateCalculation();
         }
     }
 
     public void onPowerClick(View view) {
         Button power = (Button) view;
-        if (sCalculation != "" && !root_present && !power_present && !function_present) {
+        if (sCalculation != "" && !root_pres && !power_pres && !function_pres) {
             if (getcharfromLast(sCalculation, 1) != ' ') {
                 sCalculation += power.getText().toString();
-                //we need second variable for the power
-                number_two = number_one;
+                num_two = num_one;
                 numberTwo = numberOne;
-                number_one = "";
-                power_present = true;
+                num_one = "";
+                power_pres = true;
                 updateCalculation();
             }
         }
@@ -379,25 +402,22 @@ public class CalcActivity extends Activity {
 
     public void onSquareClick(View view) {
         if (sCalculation != "" && sAnswer != "") {
-            if (!root_present && !function_present && !power_present && getcharfromLast(sCalculation, 1) != ' ' && getcharfromLast(sCalculation, 1) != ' ') {
+            if (!root_pres && !function_pres && !power_pres && getcharfromLast(sCalculation, 1) != ' ' && getcharfromLast(sCalculation, 1) != ' ') {
                 numberOne = numberOne * numberOne;
-                number_one = format.format(numberOne).toString();
-                if (current_oprator == "") {
-                    if (number_one.length() > 9) {
-                        number_one = longformate.format(numberOne);
+                num_one = format.format(numberOne).toString();
+                if (cur_operator == "") {
+                    if (num_one.length() > 9) {
+                        num_one = longformat.format(numberOne);
                     }
-                    sCalculation = number_one;
+                    sCalculation = num_one;
                     temp = numberOne;
                 } else {
-                    switch (current_oprator) {
+                    switch (cur_operator) {
                         case "+":
                             temp = Result + numberOne;
                             break;
                         case "-":
                             temp = Result - numberOne;
-                            break;
-                        case "x":
-                            temp = Result * numberOne;
                             break;
                         case "/":
                             try {
@@ -406,16 +426,19 @@ public class CalcActivity extends Activity {
                                 sAnswer = e.getMessage();
                             }
                             break;
+                        case "x":
+                            temp = Result * numberOne;
+                            break;
                     }
                     removeuntilchar(sCalculation, ' ');
-                    if (number_one.length() > 9) {
-                        number_one = longformate.format(numberOne);
+                    if (num_one.length() > 9) {
+                        num_one = longformat.format(numberOne);
                     }
-                    sCalculation += number_one;
+                    sCalculation += num_one;
                 }
                 sAnswer = format.format(temp);
                 if (sAnswer.length() > 9) {
-                    sAnswer = longformate.format(temp);
+                    sAnswer = longformat.format(temp);
                 }
                 updateCalculation();
             }
@@ -423,16 +446,16 @@ public class CalcActivity extends Activity {
     }
 
     public void onClickFactorial(View view) {
-        if (!sAnswer.equals("") && !factorial_present && !root_present && !dot_present && !power_present && !function_present) {
+        if (!sAnswer.equals("") && !factorial_pres && !root_pres && !dot_pres && !power_pres && !function_pres) {
             if (getcharfromLast(sCalculation, 1) != ' ') {
-                for (int i = 1; i < Integer.parseInt(number_one); i++) {
+                for (int i = 1; i < Integer.parseInt(num_one); i++) {
                     numberOne *= i;
                 }
                 if (numberOne.equals(0.0)) {
                     numberOne = 1.0;
                 }
-                number_one = format.format(numberOne).toString();
-                switch (current_oprator) {
+                num_one = format.format(numberOne).toString();
+                switch (cur_operator) {
                     case "":
                         Result = numberOne;
                         break;
@@ -442,62 +465,60 @@ public class CalcActivity extends Activity {
                     case "-":
                         Result -= numberOne;
                         break;
-                    case "x":
-                        Result *= numberOne;
-                        break;
                     case "/":
                         try {
                             Result /= numberOne;
                         } catch (Exception e) {
                             sAnswer = e.getMessage();
                         }
-
+                        break;
+                    case "x":
+                        Result *= numberOne;
                         break;
                 }
                 sAnswer = Result.toString();
                 temp = Result;
                 sCalculation += "! ";
-                factorial_present = true;
-                number_allow = false;
+                factorial_pres = true;
+                num_allow = false;
                 updateCalculation();
             }
         }
     }
 
     public void onClickInverse(View view) {
-        if (!sAnswer.equals("") && !factorial_present && !root_present && !dot_present && !power_present && !function_present) {
+        if (!sAnswer.equals("") && !factorial_pres && !root_pres && !dot_pres && !power_pres && !function_pres) {
             if (getcharfromLast(sCalculation, 1) != ' ') {
                 numberOne = Math.pow(numberOne, -1);
-                number_one = format.format(numberOne).toString();
-                switch (current_oprator) {
+                num_one = format.format(numberOne).toString();
+                switch (cur_operator) {
                     case "":
                         temp = numberOne;
-                        sCalculation = number_one;
+                        sCalculation = num_one;
                         break;
                     case "+":
                         temp = Result + numberOne;
                         removeuntilchar(sCalculation, ' ');
-                        sCalculation += number_one;
+                        sCalculation += num_one;
                         break;
                     case "-":
                         temp = Result - numberOne;
                         removeuntilchar(sCalculation, ' ');
-                        sCalculation += number_one;
-                        break;
-                    case "x":
-                        temp = Result * numberOne;
-                        removeuntilchar(sCalculation, ' ');
-                        sCalculation += number_one;
+                        sCalculation += num_one;
                         break;
                     case "/":
                         try {
                             temp = Result / numberOne;
                             removeuntilchar(sCalculation, ' ');
-                            sCalculation += number_one;
+                            sCalculation += num_one;
                         } catch (Exception e) {
                             sAnswer = e.getMessage();
                         }
-
+                        break;
+                    case "x":
+                        temp = Result * numberOne;
+                        removeuntilchar(sCalculation, ' ');
+                        sCalculation += num_one;
                         break;
                 }
                 sAnswer = format.format(temp).toString();
@@ -508,14 +529,14 @@ public class CalcActivity extends Activity {
 
     public void onClickPIorE(View view) {
         Button btn_PIorE = (Button) view;
-        number_allow = false;
-        if (!root_present && !dot_present && !power_present && !factorial_present && !constant_present && !function_present) {
+        num_allow = false;
+        if (!root_pres && !dot_pres && !power_pres && !factorial_pres && !constant_pres && !function_pres) {
             String str_PIorE = btn_PIorE.getText().toString() + " ";
             if (!str_PIorE.equals("e ")) {
                 str_PIorE = "\u03A0" + " ";
             }
             if (sCalculation == "") {
-                number_one = str_PIorE;
+                num_one = str_PIorE;
                 if (str_PIorE.equals("e ")) {
                     numberOne = Math.E;
                 } else {
@@ -524,13 +545,11 @@ public class CalcActivity extends Activity {
                 temp = numberOne;
             } else {
                 if (str_PIorE.equals("e ")) {
-                    //use ternary operation
-                    numberOne = getcharfromLast(sCalculation, 1) == ' ' ? Math.E : Double.parseDouble(number_one) * Math.E;
+                    numberOne = getcharfromLast(sCalculation, 1) == ' ' ? Math.E : Double.parseDouble(num_one) * Math.E;
                 } else {
-                    numberOne = getcharfromLast(sCalculation, 1) == ' ' ? Math.PI : Double.parseDouble(number_one) * Math.PI;
+                    numberOne = getcharfromLast(sCalculation, 1) == ' ' ? Math.PI : Double.parseDouble(num_one) * Math.PI;
                 }
-                switch (current_oprator) {
-
+                switch (cur_operator) {
                     case "":
                         temp = Result + numberOne;
                         break;
@@ -542,11 +561,6 @@ public class CalcActivity extends Activity {
                     case "-":
                         temp = Result - numberOne;
                         break;
-
-                    case "x"://we use x instedof * so change it in another function if you not.
-                        temp = Result * numberOne;
-                        break;
-
                     case "/":
                         try {
                             temp = Result / numberOne;
@@ -554,36 +568,39 @@ public class CalcActivity extends Activity {
                             sAnswer = e.getMessage();
                         }
                         break;
+                    case "x":
+                        temp = Result * numberOne;
+                        break;
                 }
             }
             sCalculation += str_PIorE;
             sAnswer = format.format(temp).toString();
             updateCalculation();
-            constant_present = true;
+            constant_pres = true;
         }
     }
 
     public void onClickFunction(View view) {
         Button func = (Button) view;
-        function = func.getHint().toString();//  sin_inv is not in the text
-        if (!function_present && !root_present && !power_present && !factorial_present && !dot_present) {
+        function = func.getHint().toString();
+        if (!function_pres && !root_pres && !power_pres && !factorial_pres && !dot_pres) {
             calculateFunction(function);
 
         }
     }
 
     public void calculateFunction(String function) {
-        function_present = true;
-        if (current_oprator != "" && getcharfromLast(sCalculation, 1) == ' ') {
+        function_pres = true;
+        if (cur_operator != "" && getcharfromLast(sCalculation, 1) == ' ') {
             switch (function) {
-                case "sin_inv":
-                    sCalculation += sin_inv + "(";
+                case "sin_inverse":
+                    sCalculation += sin_inverse + "(";
                     break;
-                case "cos_inv":
-                    sCalculation += cos_inv + "(";
+                case "cos_inverse":
+                    sCalculation += cos_inverse + "(";
                     break;
-                case "tan_inv":
-                    sCalculation += tan_inv + "(";
+                case "tan_inverse":
+                    sCalculation += tan_inverse + "(";
                     break;
                 default:
                     sCalculation += function + "(";
@@ -591,18 +608,18 @@ public class CalcActivity extends Activity {
             }
             updateCalculation();
         } else {
-            switch (current_oprator) {
+            switch (cur_operator) {
                 case "":
                     if (sCalculation.equals("")) {
                         switch (function) {
-                            case "sin_inv":
-                                sCalculation += sin_inv + "( ";
+                            case "sin_inverse":
+                                sCalculation += sin_inverse + "( ";
                                 break;
-                            case "cos_inv":
-                                sCalculation += cos_inv + "( ";
+                            case "cos_inverse":
+                                sCalculation += cos_inverse + "( ";
                                 break;
-                            case "tan_inv":
-                                sCalculation += tan_inv + "( ";
+                            case "tan_inverse":
+                                sCalculation += tan_inverse + "( ";
                                 break;
                             default:
                                 sCalculation += function + "( ";
@@ -612,12 +629,12 @@ public class CalcActivity extends Activity {
                         switch (function) {
                             case "log":
                                 temp = Result + Math.log10(numberOne);
-                                sCalculation = "log( " + number_one;
+                                sCalculation = "log( " + num_one;
                                 break;
 
                             case "ln":
                                 temp = Result + Math.log(numberOne);
-                                sCalculation = "ln( " + number_one;
+                                sCalculation = "ln( " + num_one;
                                 break;
 
                             case "sin":
@@ -625,47 +642,42 @@ public class CalcActivity extends Activity {
                                     numberOne = Math.toDegrees(numberOne);
                                 }
                                 temp = Result + Math.sin(numberOne);
-                                sCalculation = "sin( " + number_one;
+                                sCalculation = "sin( " + num_one;
                                 break;
-
-                            case "sin_inv":
-                                if (RorD.equals("DEG")) {
-                                    numberOne = Math.toDegrees(numberOne);
-                                }
-                                temp = Result + Math.asin(numberOne);
-                                sCalculation = sin_inv + "( " + number_one;
-                                break;
-
                             case "cos":
                                 if (RorD.equals("DEG")) {
                                     numberOne = Math.toDegrees(numberOne);
                                 }
                                 temp = Result + Math.cos(numberOne);
-                                sCalculation = "cos( " + number_one;
+                                sCalculation = "cos( " + num_one;
                                 break;
-
-                            case "cos_inv":
-                                if (RorD.equals("DEG")) {
-                                    numberOne = Math.toDegrees(numberOne);
-                                }
-                                temp = Result + Math.acos(numberOne);
-                                sCalculation = cos_inv + "( " + number_one;
-                                break;
-
                             case "tan":
                                 if (RorD.equals("DEG")) {
                                     numberOne = Math.toDegrees(numberOne);
                                 }
                                 temp = Result + Math.tan(numberOne);
-                                sCalculation = "tan( " + number_one;
+                                sCalculation = "tan( " + num_one;
                                 break;
-
-                            case "tan_inv":
+                            case "sin_inverse":
+                                if (RorD.equals("DEG")) {
+                                    numberOne = Math.toDegrees(numberOne);
+                                }
+                                temp = Result + Math.asin(numberOne);
+                                sCalculation = sin_inverse + "( " + num_one;
+                                break;
+                            case "cos_inverse":
+                                if (RorD.equals("DEG")) {
+                                    numberOne = Math.toDegrees(numberOne);
+                                }
+                                temp = Result + Math.acos(numberOne);
+                                sCalculation = cos_inverse + "( " + num_one;
+                                break;
+                            case "tan_inverse":
                                 if (RorD.equals("DEG")) {
                                     numberOne = Math.toDegrees(numberOne);
                                 }
                                 temp = Result + Math.atan(numberOne);
-                                sCalculation = tan_inv + "( " + number_one;
+                                sCalculation = tan_inverse + "( " + num_one;
                                 break;
                         }
                     }
@@ -678,12 +690,12 @@ public class CalcActivity extends Activity {
                     switch (function) {
                         case "log":
                             temp = Result + Math.log10(numberOne);
-                            sCalculation += "log(" + number_one;
+                            sCalculation += "log(" + num_one;
                             break;
 
                         case "ln":
                             temp = Result + Math.log(numberOne);
-                            sCalculation += "ln(" + number_one;
+                            sCalculation += "ln(" + num_one;
                             break;
 
                         case "sin":
@@ -691,15 +703,15 @@ public class CalcActivity extends Activity {
                                 numberOne = Math.toDegrees(numberOne);
                             }
                             temp = Result + Math.sin(numberOne);
-                            sCalculation += "sin(" + number_one;
+                            sCalculation += "sin(" + num_one;
                             break;
 
-                        case "sin_inv":
+                        case "sin_inverse":
                             if (RorD.equals("DEG")) {
                                 numberOne = Math.toDegrees(numberOne);
                             }
                             temp = Result + Math.asin(numberOne);
-                            sCalculation += sin_inv + "(" + number_one;
+                            sCalculation += sin_inverse + "(" + num_one;
                             break;
 
                         case "cos":
@@ -707,15 +719,15 @@ public class CalcActivity extends Activity {
                                 numberOne = Math.toDegrees(numberOne);
                             }
                             temp = Result + Math.cos(numberOne);
-                            sCalculation += "cos(" + number_one;
+                            sCalculation += "cos(" + num_one;
                             break;
 
-                        case "cos_inv":
+                        case "cos_inverse":
                             if (RorD.equals("DEG")) {
                                 numberOne = Math.toDegrees(numberOne);
                             }
                             temp = Result + Math.acos(numberOne);
-                            sCalculation += cos_inv + "(" + number_one;
+                            sCalculation += cos_inverse + "(" + num_one;
                             break;
 
                         case "tan":
@@ -723,15 +735,15 @@ public class CalcActivity extends Activity {
                                 numberOne = Math.toDegrees(numberOne);
                             }
                             temp = Result + Math.tan(numberOne);
-                            sCalculation += "tan(" + number_one;
+                            sCalculation += "tan(" + num_one;
                             break;
 
-                        case "tan_inv":
+                        case "tan_inverse":
                             if (RorD.equals("DEG")) {
                                 numberOne = Math.toDegrees(numberOne);
                             }
                             temp = Result + Math.atan(numberOne);
-                            sCalculation += tan_inv + "(" + number_one;
+                            sCalculation += tan_inverse + "(" + num_one;
                             break;
                     }
                     sAnswer = temp.toString();
@@ -743,12 +755,12 @@ public class CalcActivity extends Activity {
                     switch (function) {
                         case "log":
                             temp = Result - Math.log10(numberOne);
-                            sCalculation += "log(" + number_one;
+                            sCalculation += "log(" + num_one;
                             break;
 
                         case "ln":
                             temp = Result - Math.log(numberOne);
-                            sCalculation += "ln(" + number_one;
+                            sCalculation += "ln(" + num_one;
                             break;
 
                         case "sin":
@@ -756,47 +768,42 @@ public class CalcActivity extends Activity {
                                 numberOne = Math.toDegrees(numberOne);
                             }
                             temp = Result - Math.sin(numberOne);
-                            sCalculation += "sin(" + number_one;
+                            sCalculation += "sin(" + num_one;
                             break;
-
-                        case "sin_inv":
-                            if (RorD.equals("DEG")) {
-                                numberOne = Math.toDegrees(numberOne);
-                            }
-                            temp = Result - Math.asin(numberOne);
-                            sCalculation += sin_inv + "(" + number_one;
-                            break;
-
                         case "cos":
                             if (RorD.equals("DEG")) {
                                 numberOne = Math.toDegrees(numberOne);
                             }
                             temp = Result - Math.cos(numberOne);
-                            sCalculation += "cos(" + number_one;
+                            sCalculation += "cos(" + num_one;
                             break;
-
-                        case "cos_inv":
-                            if (RorD.equals("DEG")) {
-                                numberOne = Math.toDegrees(numberOne);
-                            }
-                            temp = Result - Math.acos(numberOne);
-                            sCalculation += cos_inv + "(" + number_one;
-                            break;
-
                         case "tan":
                             if (RorD.equals("DEG")) {
                                 numberOne = Math.toDegrees(numberOne);
                             }
                             temp = Result - Math.tan(numberOne);
-                            sCalculation += "tan(" + number_one;
+                            sCalculation += "tan(" + num_one;
                             break;
-
-                        case "tan_inv":
+                        case "sin_inverse":
+                            if (RorD.equals("DEG")) {
+                                numberOne = Math.toDegrees(numberOne);
+                            }
+                            temp = Result - Math.asin(numberOne);
+                            sCalculation += sin_inverse + "(" + num_one;
+                            break;
+                        case "cos_inverse":
+                            if (RorD.equals("DEG")) {
+                                numberOne = Math.toDegrees(numberOne);
+                            }
+                            temp = Result - Math.acos(numberOne);
+                            sCalculation += cos_inverse + "(" + num_one;
+                            break;
+                        case "tan_inverse":
                             if (RorD.equals("DEG")) {
                                 numberOne = Math.toDegrees(numberOne);
                             }
                             temp = Result - Math.atan(numberOne);
-                            sCalculation += tan_inv + "(" + number_one;
+                            sCalculation += tan_inverse + "(" + num_one;
                             break;
                     }
                     sAnswer = temp.toString();
@@ -808,12 +815,12 @@ public class CalcActivity extends Activity {
                     switch (function) {
                         case "log":
                             temp = Result * Math.log10(numberOne);
-                            sCalculation += "log(" + number_one;
+                            sCalculation += "log(" + num_one;
                             break;
 
                         case "ln":
                             temp = Result * Math.log(numberOne);
-                            sCalculation += "ln(" + number_one;
+                            sCalculation += "ln(" + num_one;
                             break;
 
                         case "sin":
@@ -821,47 +828,42 @@ public class CalcActivity extends Activity {
                                 numberOne = Math.toDegrees(numberOne);
                             }
                             temp = Result * Math.sin(numberOne);
-                            sCalculation += "sin(" + number_one;
+                            sCalculation += "sin(" + num_one;
                             break;
-
-                        case "sin_inv":
-                            if (RorD.equals("DEG")) {
-                                numberOne = Math.toDegrees(numberOne);
-                            }
-                            temp = Result * Math.asin(numberOne);
-                            sCalculation += sin_inv + "(" + number_one;
-                            break;
-
                         case "cos":
                             if (RorD.equals("DEG")) {
                                 numberOne = Math.toDegrees(numberOne);
                             }
                             temp = Result * Math.cos(numberOne);
-                            sCalculation += "cos(" + number_one;
+                            sCalculation += "cos(" + num_one;
                             break;
-
-                        case "cos_inv":
-                            if (RorD.equals("DEG")) {
-                                numberOne = Math.toDegrees(numberOne);
-                            }
-                            temp = Result * Math.acos(numberOne);
-                            sCalculation += cos_inv + "(" + number_one;
-                            break;
-
                         case "tan":
                             if (RorD.equals("DEG")) {
                                 numberOne = Math.toDegrees(numberOne);
                             }
                             temp = Result * Math.tan(numberOne);
-                            sCalculation += "tan(" + number_one;
+                            sCalculation += "tan(" + num_one;
                             break;
-
-                        case "tan_inv":
+                        case "sin_inverse":
+                            if (RorD.equals("DEG")) {
+                                numberOne = Math.toDegrees(numberOne);
+                            }
+                            temp = Result * Math.asin(numberOne);
+                            sCalculation += sin_inverse + "(" + num_one;
+                            break;
+                        case "cos_inverse":
+                            if (RorD.equals("DEG")) {
+                                numberOne = Math.toDegrees(numberOne);
+                            }
+                            temp = Result * Math.acos(numberOne);
+                            sCalculation += cos_inverse + "(" + num_one;
+                            break;
+                        case "tan_inverse":
                             if (RorD.equals("DEG")) {
                                 numberOne = Math.toDegrees(numberOne);
                             }
                             temp = Result * Math.atan(numberOne);
-                            sCalculation += tan_inv + "(" + number_one;
+                            sCalculation += tan_inverse + "(" + num_one;
                             break;
                     }
                     sAnswer = temp.toString();
@@ -874,7 +876,7 @@ public class CalcActivity extends Activity {
                         case "log":
                             try {
                                 temp = Result / Math.log10(numberOne);
-                                sCalculation += "log(" + number_one;
+                                sCalculation += "log(" + num_one;
                             } catch (Exception e) {
                                 sAnswer = e.getMessage();
                             }
@@ -883,7 +885,7 @@ public class CalcActivity extends Activity {
                         case "ln":
                             try {
                                 temp = Result / Math.log(numberOne);
-                                sCalculation += "ln(" + number_one;
+                                sCalculation += "ln(" + num_one;
                             } catch (Exception e) {
                                 sAnswer = e.getMessage();
                             }
@@ -895,67 +897,62 @@ public class CalcActivity extends Activity {
                                     numberOne = Math.toDegrees(numberOne);
                                 }
                                 temp = Result / Math.sin(numberOne);
-                                sCalculation += "sin(" + number_one;
+                                sCalculation += "sin(" + num_one;
                             } catch (Exception e) {
                                 sAnswer = e.getMessage();
                             }
                             break;
-
-                        case "sin_inv":
-                            try {
-                                if (RorD.equals("DEG")) {
-                                    numberOne = Math.toDegrees(numberOne);
-                                }
-                                temp = Result / Math.asin(numberOne);
-                                sCalculation += sin_inv + "(" + number_one;
-                            } catch (Exception e) {
-                                sAnswer = e.getMessage();
-                            }
-                            break;
-
                         case "cos":
                             try {
                                 if (RorD.equals("DEG")) {
                                     numberOne = Math.toDegrees(numberOne);
                                 }
                                 temp = Result / Math.cos(numberOne);
-                                sCalculation += "cos(" + number_one;
+                                sCalculation += "cos(" + num_one;
                             } catch (Exception e) {
                                 sAnswer = e.getMessage();
                             }
                             break;
-
-                        case "cos_inv":
-                            try {
-                                if (RorD.equals("DEG")) {
-                                    numberOne = Math.toDegrees(numberOne);
-                                }
-                                temp = Result / Math.acos(numberOne);
-                                sCalculation += cos_inv + "(" + number_one;
-                            } catch (Exception e) {
-                                sAnswer = e.getMessage();
-                            }
-                            break;
-
                         case "tan":
                             try {
                                 if (RorD.equals("DEG")) {
                                     numberOne = Math.toDegrees(numberOne);
                                 }
                                 temp = Result / Math.tan(numberOne);
-                                sCalculation += "tan(" + number_one;
+                                sCalculation += "tan(" + num_one;
                             } catch (Exception e) {
                                 sAnswer = e.getMessage();
                             }
                             break;
-
-                        case "tan_inv":
+                        case "sin_inverse":
+                            try {
+                                if (RorD.equals("DEG")) {
+                                    numberOne = Math.toDegrees(numberOne);
+                                }
+                                temp = Result / Math.asin(numberOne);
+                                sCalculation += sin_inverse + "(" + num_one;
+                            } catch (Exception e) {
+                                sAnswer = e.getMessage();
+                            }
+                            break;
+                        case "cos_inverse":
+                            try {
+                                if (RorD.equals("DEG")) {
+                                    numberOne = Math.toDegrees(numberOne);
+                                }
+                                temp = Result / Math.acos(numberOne);
+                                sCalculation += cos_inverse + "(" + num_one;
+                            } catch (Exception e) {
+                                sAnswer = e.getMessage();
+                            }
+                            break;
+                        case "tan_inverse":
                             try {
                                 if (RorD.equals("DEG")) {
                                     numberOne = Math.toDegrees(numberOne);
                                 }
                                 temp = Result / Math.atan(numberOne);
-                                sCalculation += tan_inv + "(" + number_one;
+                                sCalculation += tan_inverse + "(" + num_one;
                             } catch (Exception e) {
                                 sAnswer = e.getMessage();
                             }
@@ -969,30 +966,31 @@ public class CalcActivity extends Activity {
     }
 
     public void onClickDelete(View view) {
-        if (function_present) {
+        if (function_pres) {
             DeleteFunction();
             return;
         }
-        if (root_present) {
+        if (root_pres) {
             removeRoot();
             return;
         }
-        if (power_present) {
+        if (power_pres) {
             removePower();
             return;
         }
         if (sAnswer != "") {
             if (getcharfromLast(sCalculation, 1) != ' ') {
-                if (number_one.length() < 2 && current_oprator != "") {
-                    number_one = "";
+                if (num_one.length() < 2 && cur_operator != "") {
+                    num_one = "";
                     temp = Result;
                     sAnswer = format.format(Result).toString();
+
                     sCalculation = removechar(sCalculation, 1);
                     updateCalculation();
                 } else {
-                    switch (current_oprator) {
+                    switch (cur_operator) {
                         case "":
-                            if (value_inverted) {
+                            if (inverted_value) {
                                 sAnswer = sAnswer.substring(1, sAnswer.length());
                                 sCalculation = sCalculation.substring(1, sAnswer.length());
                                 updateCalculation();
@@ -1001,36 +999,36 @@ public class CalcActivity extends Activity {
                                 cleardata();
                             } else {
                                 if (getcharfromLast(sCalculation, 1) == '.') {
-                                    dot_present = false;
+                                    dot_pres = false;
                                 }
-                                number_one = removechar(number_one, 1);
-                                numberOne = Double.parseDouble(number_one);
+                                num_one = removechar(num_one, 1);
+                                numberOne = Double.parseDouble(num_one);
                                 temp = numberOne;
-                                sCalculation = number_one;
-                                sAnswer = number_one;
+                                sCalculation = num_one;
+                                sAnswer = num_one;
                                 updateCalculation();
                             }
                             break;
 
                         case "+":
-                            if (value_inverted) {
+                            if (inverted_value) {
                                 numberOne = numberOne * (-1);
-                                number_one = format.format(numberOne).toString();
+                                num_one = format.format(numberOne).toString();
                                 temp = Result + numberOne;
                                 sAnswer = format.format(temp).toString();
                                 removeuntilchar(sCalculation, ' ');
-                                sCalculation += number_one;
+                                sCalculation += num_one;
                                 updateCalculation();
-                                value_inverted = value_inverted ? false : true;
+                                inverted_value = inverted_value ? false : true;
                             }
                             if (getcharfromLast(sCalculation, 1) == '.') {
-                                dot_present = false;
+                                dot_pres = false;
                             }
-                            number_one = removechar(number_one, 1);
-                            if (number_one.length() == 1 && number_one == ".") {
-                                numberOne = Double.parseDouble(number_one);
+                            num_one = removechar(num_one, 1);
+                            if (num_one.length() == 1 && num_one == ".") {
+                                numberOne = Double.parseDouble(num_one);
                             }
-                            numberOne = Double.parseDouble(number_one);
+                            numberOne = Double.parseDouble(num_one);
                             temp = Result + numberOne;
                             sAnswer = format.format(temp).toString();
                             sCalculation = removechar(sCalculation, 1);
@@ -1038,81 +1036,80 @@ public class CalcActivity extends Activity {
                             break;
 
                         case "-":
-                            if (value_inverted) {
+                            if (inverted_value) {
                                 numberOne = numberOne * (-1);
-                                number_one = format.format(numberOne).toString();
+                                num_one = format.format(numberOne).toString();
                                 temp = Result - numberOne;
                                 sAnswer = format.format(temp).toString();
                                 removeuntilchar(sCalculation, ' ');
-                                sCalculation += number_one;
+                                sCalculation += num_one;
                                 updateCalculation();
-                                value_inverted = value_inverted ? false : true;
+                                inverted_value = inverted_value ? false : true;
                             }
                             if (getcharfromLast(sCalculation, 1) == '.') {
-                                dot_present = false;
+                                dot_pres = false;
                             }
-                            number_one = removechar(number_one, 1);
-                            if (number_one.length() == 1 && number_one == ".") {
-                                numberOne = Double.parseDouble(number_one);
+                            num_one = removechar(num_one, 1);
+                            if (num_one.length() == 1 && num_one == ".") {
+                                numberOne = Double.parseDouble(num_one);
                             }
-                            numberOne = Double.parseDouble(number_one);
+                            numberOne = Double.parseDouble(num_one);
                             temp = Result - numberOne;
                             sAnswer = format.format(temp).toString();
                             sCalculation = removechar(sCalculation, 1);
                             updateCalculation();
                             break;
-
-                        case "x":
-                            if (value_inverted) {
-                                numberOne = numberOne * (-1);
-                                number_one = format.format(numberOne).toString();
-                                temp = Result * numberOne;
-                                sAnswer = format.format(temp).toString();
-                                removeuntilchar(sCalculation, ' ');
-                                sCalculation += number_one;
-                                updateCalculation();
-                                value_inverted = value_inverted ? false : true;
-                            }
-                            if (getcharfromLast(sCalculation, 1) == '.') {
-                                dot_present = false;
-                            }
-                            number_one = removechar(number_one, 1);
-                            if (number_one.length() == 1 && number_one == ".") {
-                                numberOne = Double.parseDouble(number_one);
-                            }
-                            numberOne = Double.parseDouble(number_one);
-                            temp = Result * numberOne;
-                            sAnswer = format.format(temp).toString();
-                            sCalculation = removechar(sCalculation, 1);
-                            updateCalculation();
-                            break;
-
                         case "/":
                             try {
-                                if (value_inverted) {
+                                if (inverted_value) {
                                     numberOne = numberOne * (-1);
-                                    number_one = format.format(numberOne).toString();
+                                    num_one = format.format(numberOne).toString();
                                     temp = Result / numberOne;
                                     sAnswer = format.format(temp).toString();
                                     removeuntilchar(sCalculation, ' ');
-                                    sCalculation += number_one;
+                                    sCalculation += num_one;
                                     updateCalculation();
-                                    value_inverted = value_inverted ? false : true;
+                                    inverted_value = inverted_value ? false : true;
                                 }
                                 if (getcharfromLast(sCalculation, 1) == '.') {
-                                    dot_present = false;
+                                    dot_pres = false;
                                 }
-                                number_one = removechar(number_one, 1);
-                                if (number_one.length() == 1 && number_one == ".") {
-                                    numberOne = Double.parseDouble(number_one);
+                                num_one = removechar(num_one, 1);
+                                if (num_one.length() == 1 && num_one == ".") {
+                                    numberOne = Double.parseDouble(num_one);
                                 }
-                                numberOne = Double.parseDouble(number_one);
+                                numberOne = Double.parseDouble(num_one);
                                 temp = Result / numberOne;
                                 sAnswer = format.format(temp).toString();
                                 sCalculation = removechar(sCalculation, 1);
                             } catch (Exception e) {
                                 sAnswer = e.getMessage();
                             }
+                            updateCalculation();
+                            break;
+
+                        case "x":
+                            if (inverted_value) {
+                                numberOne = numberOne * (-1);
+                                num_one = format.format(numberOne).toString();
+                                temp = Result * numberOne;
+                                sAnswer = format.format(temp).toString();
+                                removeuntilchar(sCalculation, ' ');
+                                sCalculation += num_one;
+                                updateCalculation();
+                                inverted_value = inverted_value ? false : true;
+                            }
+                            if (getcharfromLast(sCalculation, 1) == '.') {
+                                dot_pres = false;
+                            }
+                            num_one = removechar(num_one, 1);
+                            if (num_one.length() == 1 && num_one == ".") {
+                                numberOne = Double.parseDouble(num_one);
+                            }
+                            numberOne = Double.parseDouble(num_one);
+                            temp = Result * numberOne;
+                            sAnswer = format.format(temp).toString();
+                            sCalculation = removechar(sCalculation, 1);
                             updateCalculation();
                             break;
                     }
@@ -1123,30 +1120,36 @@ public class CalcActivity extends Activity {
 
     public void removePower() {
         if (sAnswer != "" && sCalculation != "") {
-            switch (current_oprator) {
+            switch (cur_operator) {
                 case "":
                     if (getcharfromLast(sCalculation, 1) == '^') {
                         sCalculation = removechar(sCalculation, 1);
-                        number_one = number_two;
-                        numberOne = Double.parseDouble(number_one);
-                        number_two = "";
+                        num_one = num_two;
+
+                        numberOne = Double.parseDouble(num_one);
+                        num_two = "";
                         numberTwo = 0.0;
+
                         updateCalculation();
                     } else if (getcharfromLast(sCalculation, 2) == '^') {
-                        number_one = "";
+                        num_one = "";
+
                         numberOne = 0.0;
                         temp = numberTwo;
+
+
                         sAnswer = format.format(temp).toString();
                         sCalculation = removechar(sCalculation, 1);
                         updateCalculation();
                     } else {
                         if (getcharfromLast(sCalculation, 1) == '.') {
-                            dot_present = false;
+                            dot_pres = false;
                         }
-                        number_one = removechar(number_one, 1);
-                        numberOne = Double.parseDouble(number_one);
+                        num_one = removechar(num_one, 1);
+                        numberOne = Double.parseDouble(num_one);
                         temp = Math.pow(numberTwo, numberOne);
                         sAnswer = format.format(temp).toString();
+
                         sCalculation = removechar(sCalculation, 1);
                         updateCalculation();
                     }
@@ -1155,25 +1158,30 @@ public class CalcActivity extends Activity {
                 case "+":
                     if (getcharfromLast(sCalculation, 1) == '^') {
                         sCalculation = removechar(sCalculation, 1);
-                        number_one = number_two;
-                        numberOne = Double.parseDouble(number_one);
-                        number_two = "";
+                        num_one = num_two;
+                        numberOne = Double.parseDouble(num_one);
+
+                        num_two = "";
                         numberTwo = 0.0;
                         updateCalculation();
                     } else if (getcharfromLast(sCalculation, 2) == '^') {
-                        number_one = "";
+                        num_one = "";
                         numberOne = 0.0;
                         temp = Result + numberTwo;
+
                         sAnswer = format.format(temp).toString();
                         sCalculation = removechar(sCalculation, 1);
                         updateCalculation();
                     } else {
                         if (getcharfromLast(sCalculation, 1) == '.') {
-                            dot_present = false;
+                            dot_pres = false;
                         }
-                        number_one = removechar(number_one, 1);
-                        numberOne = Double.parseDouble(number_one);
+                        num_one = removechar(num_one, 1);
+
+                        numberOne = Double.parseDouble(num_one);
                         temp = Result + Math.pow(numberTwo, numberOne);
+
+
                         sAnswer = format.format(temp).toString();
                         sCalculation = removechar(sCalculation, 1);
                         updateCalculation();
@@ -1183,70 +1191,47 @@ public class CalcActivity extends Activity {
                 case "-":
                     if (getcharfromLast(sCalculation, 1) == '^') {
                         sCalculation = removechar(sCalculation, 1);
-                        number_one = number_two;
-                        numberOne = Double.parseDouble(number_one);
-                        number_two = "";
+                        num_one = num_two;
+                        numberOne = Double.parseDouble(num_one);
+                        num_two = "";
                         numberTwo = 0.0;
+
                         updateCalculation();
                     } else if (getcharfromLast(sCalculation, 2) == '^') {
-                        number_one = "";
+                        num_one = "";
+
+
                         numberOne = 0.0;
                         temp = Result - numberTwo;
+
                         sAnswer = format.format(temp).toString();
                         sCalculation = removechar(sCalculation, 1);
                         updateCalculation();
                     } else {
                         if (getcharfromLast(sCalculation, 1) == '.') {
-                            dot_present = false;
+                            dot_pres = false;
                         }
-                        number_one = removechar(number_one, 1);
-                        numberOne = Double.parseDouble(number_one);
+                        num_one = removechar(num_one, 1);
+                        numberOne = Double.parseDouble(num_one);
                         temp = Result - Math.pow(numberTwo, numberOne);
                         sAnswer = format.format(temp).toString();
                         sCalculation = removechar(sCalculation, 1);
+
                         updateCalculation();
                     }
                     break;
-
-                case "x":
-                    if (getcharfromLast(sCalculation, 1) == '^') {
-                        sCalculation = removechar(sCalculation, 1);
-                        number_one = number_two;
-                        numberOne = Double.parseDouble(number_one);
-                        number_two = "";
-                        numberTwo = 0.0;
-                        updateCalculation();
-                    } else if (getcharfromLast(sCalculation, 2) == '^') {
-                        number_one = "";
-                        numberOne = 0.0;
-                        temp = Result * numberTwo;
-                        sAnswer = format.format(temp).toString();
-                        sCalculation = removechar(sCalculation, 1);
-                        updateCalculation();
-                    } else {
-                        if (getcharfromLast(sCalculation, 1) == '.') {
-                            dot_present = false;
-                        }
-                        number_one = removechar(number_one, 1);
-                        numberOne = Double.parseDouble(number_one);
-                        temp = Result * Math.pow(numberTwo, numberOne);
-                        sAnswer = format.format(temp).toString();
-                        sCalculation = removechar(sCalculation, 1);
-                        updateCalculation();
-                    }
-                    break;
-
                 case "/":
                     try {
                         if (getcharfromLast(sCalculation, 1) == '^') {
                             sCalculation = removechar(sCalculation, 1);
-                            number_one = number_two;
-                            numberOne = Double.parseDouble(number_one);
-                            number_two = "";
+                            num_one = num_two;
+                            numberOne = Double.parseDouble(num_one);
+                            num_two = "";
+
                             numberTwo = 0.0;
                             updateCalculation();
                         } else if (getcharfromLast(sCalculation, 2) == '^') {
-                            number_one = "";
+                            num_one = "";
                             numberOne = 0.0;
                             temp = Result / numberTwo;
                             sAnswer = format.format(temp).toString();
@@ -1254,10 +1239,10 @@ public class CalcActivity extends Activity {
                             updateCalculation();
                         } else {
                             if (getcharfromLast(sCalculation, 1) == '.') {
-                                dot_present = false;
+                                dot_pres = false;
                             }
-                            number_one = removechar(number_one, 1);
-                            numberOne = Double.parseDouble(number_one);
+                            num_one = removechar(num_one, 1);
+                            numberOne = Double.parseDouble(num_one);
                             temp = Result / Math.pow(numberTwo, numberOne);
                             sAnswer = format.format(temp).toString();
                             sCalculation = removechar(sCalculation, 1);
@@ -1268,6 +1253,35 @@ public class CalcActivity extends Activity {
                     }
                     updateCalculation();
                     break;
+                case "x":
+                    if (getcharfromLast(sCalculation, 1) == '^') {
+                        sCalculation = removechar(sCalculation, 1);
+                        num_one = num_two;
+                        numberOne = Double.parseDouble(num_one);
+                        num_two = "";
+                        numberTwo = 0.0;
+                        updateCalculation();
+                    } else if (getcharfromLast(sCalculation, 2) == '^') {
+                        num_one = "";
+                        numberOne = 0.0;
+                        temp = Result * numberTwo;
+                        sAnswer = format.format(temp).toString();
+                        sCalculation = removechar(sCalculation, 1);
+                        updateCalculation();
+                    } else {
+                        if (getcharfromLast(sCalculation, 1) == '.') {
+                            dot_pres = false;
+                        }
+                        num_one = removechar(num_one, 1);
+                        numberOne = Double.parseDouble(num_one);
+                        temp = Result * Math.pow(numberTwo, numberOne);
+                        sAnswer = format.format(temp).toString();
+                        sCalculation = removechar(sCalculation, 1);
+                        updateCalculation();
+                    }
+                    break;
+
+
             }
         }
     }
@@ -1276,46 +1290,46 @@ public class CalcActivity extends Activity {
         if (getcharfromLast(sCalculation, 1) != ' ') {
             if (String.valueOf(getcharfromLast(sCalculation, 1)).equals("\u221A")) {
                 sCalculation = removechar(sCalculation, 1);
-                root_present = false;
-                invert_allow = true;
+                root_pres = false;
+                inv_allow = true;
                 updateCalculation();
             }
             if (sAnswer != "") {
-                if (number_one.length() < 2 && current_oprator != "") {
-                    number_one = "";
+                if (num_one.length() < 2 && cur_operator != "") {
+                    num_one = "";
                     numberOne = Result;
                     temp = Result;
                     sAnswer = format.format(Result).toString();
                     sCalculation = removechar(sCalculation, 1);
                     updateCalculation();
                 } else {
-                    switch (current_oprator) {
+                    switch (cur_operator) {
                         case "":
                             if (sCalculation.length() <= 2) {
                                 cleardata();
                             } else {
                                 if (getcharfromLast(sCalculation, 1) == '.') {
-                                    dot_present = false;
+                                    dot_pres = false;
                                 }
-                                number_one = removechar(number_one, 1);
-                                numberOne = Double.parseDouble(number_one);
+                                num_one = removechar(num_one, 1);
+                                numberOne = Double.parseDouble(num_one);
                                 numberOne = Math.sqrt(numberOne);
                                 temp = numberOne;
                                 sAnswer = format.format(temp).toString();
-                                sCalculation = "\u221A" + number_one;
+                                sCalculation = "\u221A" + num_one;
                                 updateCalculation();
                             }
                             break;
 
                         case "+":
                             if (getcharfromLast(sCalculation, 1) == '.') {
-                                dot_present = false;
+                                dot_pres = false;
                             }
-                            number_one = removechar(number_one, 1);
-                            if (number_one.length() == 1 && number_one == ".") {
-                                numberOne = Double.parseDouble(number_one);
+                            num_one = removechar(num_one, 1);
+                            if (num_one.length() == 1 && num_one == ".") {
+                                numberOne = Double.parseDouble(num_one);
                             }
-                            numberOne = Double.parseDouble(number_one);
+                            numberOne = Double.parseDouble(num_one);
                             numberOne = Math.sqrt(numberOne);
                             temp = Result + numberOne;
                             sAnswer = format.format(temp).toString();
@@ -1325,13 +1339,13 @@ public class CalcActivity extends Activity {
 
                         case "-":
                             if (getcharfromLast(sCalculation, 1) == '.') {
-                                dot_present = false;
+                                dot_pres = false;
                             }
-                            number_one = removechar(number_one, 1);
-                            if (number_one.length() == 1 && number_one == ".") {
-                                numberOne = Double.parseDouble(number_one);
+                            num_one = removechar(num_one, 1);
+                            if (num_one.length() == 1 && num_one == ".") {
+                                numberOne = Double.parseDouble(num_one);
                             }
-                            numberOne = Double.parseDouble(number_one);
+                            numberOne = Double.parseDouble(num_one);
                             numberOne = Math.sqrt(numberOne);
                             temp = Result - numberOne;
                             sAnswer = format.format(temp).toString();
@@ -1341,13 +1355,13 @@ public class CalcActivity extends Activity {
 
                         case "x":
                             if (getcharfromLast(sCalculation, 1) == '.') {
-                                dot_present = false;
+                                dot_pres = false;
                             }
-                            number_one = removechar(number_one, 1);
-                            if (number_one.length() == 1 && number_one == ".") {
-                                numberOne = Double.parseDouble(number_one);
+                            num_one = removechar(num_one, 1);
+                            if (num_one.length() == 1 && num_one == ".") {
+                                numberOne = Double.parseDouble(num_one);
                             }
-                            numberOne = Double.parseDouble(number_one);
+                            numberOne = Double.parseDouble(num_one);
                             numberOne = Math.sqrt(numberOne);
                             temp = Result * numberOne;
                             sAnswer = format.format(temp).toString();
@@ -1358,13 +1372,13 @@ public class CalcActivity extends Activity {
                         case "/":
                             try {
                                 if (getcharfromLast(sCalculation, 1) == '.') {
-                                    dot_present = false;
+                                    dot_pres = false;
                                 }
-                                number_one = removechar(number_one, 1);
-                                if (number_one.length() == 1 && number_one == ".") {
-                                    numberOne = Double.parseDouble(number_one);
+                                num_one = removechar(num_one, 1);
+                                if (num_one.length() == 1 && num_one == ".") {
+                                    numberOne = Double.parseDouble(num_one);
                                 }
-                                numberOne = Double.parseDouble(number_one);
+                                numberOne = Double.parseDouble(num_one);
                                 numberOne = Math.sqrt(numberOne);
                                 temp = Result + numberOne;
                                 sAnswer = format.format(temp).toString();
@@ -1381,31 +1395,34 @@ public class CalcActivity extends Activity {
     }
 
     public void DeleteFunction() {
-        if (current_oprator == "") {
+        if (cur_operator == "") {
+
             if (getcharfromLast(sCalculation, 1) == ' ') {
                 cleardata();
             } else if (getcharfromLast(sCalculation, 2) == ' ') {
                 cleardata();
             } else {
                 sCalculation = removechar(sCalculation, 1);
-                number_one = removechar(number_one, 1);
-                numberOne = Double.parseDouble(number_one);
+                num_one = removechar(num_one, 1);
+                numberOne = Double.parseDouble(num_one);
                 calculateFunction(function);
             }
             updateCalculation();
         } else {
             if (getcharfromLast(sCalculation, 1) == '(') {
                 removeuntilchar(sCalculation, ' ');
-                function_present = false;
+                function_pres = false;
+
             } else if (getcharfromLast(sCalculation, 2) == '(') {
                 sCalculation = removechar(sCalculation, 1);
-                number_one = "";
+                num_one = "";
                 temp = Result;
                 sAnswer = format.format(Result).toString();
             } else {
                 sCalculation = removechar(sCalculation, 1);
-                number_one = removechar(number_one, 1);
-                numberOne = Double.parseDouble(number_one);
+                num_one = removechar(num_one, 1);
+                numberOne = Double.parseDouble(num_one);
+
                 calculateFunction(function);
             }
             updateCalculation();
