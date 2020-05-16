@@ -25,7 +25,7 @@ public class CalcActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_calc);
+        setContentView(R.layout.activity_main);
         calculation = findViewById(R.id.calculation);
         //set movement to the text view
         calculation.setMovementMethod(new ScrollingMovementMethod());
