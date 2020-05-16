@@ -25,8 +25,8 @@ public class CalcActivity extends Activity {
     NumberFormat longformat, format;
     Button detaBaseButton;
 
-    //MyOpenHelper helper = new MyOpenHelper(this);
-    //final SQLiteDatabase db = helper.getWritableDatabase();
+    MyOpenHelper helper = new MyOpenHelper(this);
+    //
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -256,18 +256,17 @@ public class CalcActivity extends Activity {
             function_pres = false;
             inverted_value = false;
 
+            final SQLiteDatabase db = helper.getWritableDatabase();
 
-            /*
-            //long millis = System.currentTimeMillis();
+            long millis = System.currentTimeMillis();
             String equation = sCalculation;
-            //String TimeStanp = Long.toString(millis);
+            String TimeStanp = Long.toString(millis);
             String TimeStamp = "Oppai";
             ContentValues insertValues = new ContentValues();
             insertValues.put("equation", equation);
             insertValues.put("TimeStamp", TimeStamp);
             long id = db.insert("calcBB", equation, insertValues);
 
-             */
 
 
         }

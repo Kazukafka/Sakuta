@@ -15,7 +15,7 @@ public class RecordActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_record);
+        setContentView(R.layout.activity_record2);
 
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
@@ -30,22 +30,12 @@ public class RecordActivity extends Activity {
         boolean mov = c.moveToFirst();
         while (mov) {
             TextView textView = new TextView(this);
-            textView.setText(String.format("Equation : %s : Timestamp : %d", c.getString(0),
+            textView.setText(String.format("Equation : \n %s : Timestamp : %d", c.getString(0),
                     c.getInt(1)));
             mov = c.moveToNext();
             layout.addView(textView);
         }
         c.close();
         db.close();
-
-        /*Button returnButton = findViewById(R.id.bbutton);
-        returnButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
-
-         */
     }
 }
