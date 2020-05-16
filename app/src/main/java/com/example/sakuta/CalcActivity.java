@@ -59,7 +59,7 @@ public class CalcActivity extends Activity {
             @Override
             public void onClick(View v) {
                 Intent dbIntent = new Intent(CalcActivity.this,
-                        SubActivity.class);
+                        RecordActivity.class);
                 startActivity(dbIntent);
 
             }
