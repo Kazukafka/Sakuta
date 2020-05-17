@@ -30,7 +30,7 @@ public class RecordActivity extends Activity {
         boolean mov = c.moveToFirst();
         while (mov) {
             TextView textView = new TextView(this);
-            textView.setText(String.format("Equation : \n %s : Timestamp : %d", c.getString(0),
+            textView.setText(String.format("Equation : \n %s : Timestamp : %d \n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~", c.getString(0),
                     c.getInt(1)));
             mov = c.moveToNext();
             layout.addView(textView);
