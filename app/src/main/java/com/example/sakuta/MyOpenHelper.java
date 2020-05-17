@@ -21,4 +21,9 @@ public class MyOpenHelper extends SQLiteOpenHelper {
 
     }
 
+    void deleteAllData(){
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("DELETE FROM " + "dbTest");
+    }
+
 }
