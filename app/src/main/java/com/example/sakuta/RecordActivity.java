@@ -38,4 +38,6 @@ public class RecordActivity extends Activity {
         c.close();
         db.close();
     }
+
+    //Test Branch
 }
