@@ -26,6 +26,19 @@
         android:padding="10dp"
         android:textSize="@dimen/textSize" />
 
+    <TextView
+        android:id="@+id/ts"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/timestamp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_weight="1"
+        android:hint="TimeStamp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:textSize="24sp" />
+
     <LinearLayout
         android:id="@+id/keypad"
         android:layout_width="match_parent"
