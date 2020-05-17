@@ -26,7 +26,6 @@ public class CalcActivity extends Activity {
     Button detaBaseButton;
 
     MyOpenHelper helper = new MyOpenHelper(this);
-    //
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -257,11 +256,11 @@ public class CalcActivity extends Activity {
             inverted_value = false;
 
             final SQLiteDatabase db = helper.getWritableDatabase();
+            final TextView ts = (TextView) findViewById(R.id.ts);
 
             long millis = System.currentTimeMillis();
             String equation = sCalculation;
-            String TimeStanp = Long.toString(millis);
-            String TimeStamp = "Oppai";
+            String TimeStamp = Long.toString(millis);
             ContentValues insertValues = new ContentValues();
             insertValues.put("equation", equation);
             insertValues.put("TimeStamp", TimeStamp);
