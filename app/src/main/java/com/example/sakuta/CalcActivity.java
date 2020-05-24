@@ -126,6 +126,14 @@ public class CalcActivity extends Activity {
 
                     }
                     break;
+
+
+                case "(":
+                    sCalculation += "(";
+                    break;
+                case ")":
+                    sCalculation += ")";
+                    break;
             }
             sAnswer = format.format(temp).toString();
             updateCalculation();

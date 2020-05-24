@@ -290,6 +290,30 @@
                 android:textSize="@dimen/textSize" />
 
             <Button
+                android:id="@+id/btn_clear2"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_margin="@dimen/buttonMargin"
+                android:layout_weight="1"
+                android:background="@drawable/com_facebook_tooltip_black_background"
+                android:onClick="onClickNumber"
+                android:text="("
+                android:textColor="@color/white"
+                android:textSize="@dimen/textSize" />
+
+            <Button
+                android:id="@+id/btn_clear3"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_margin="@dimen/buttonMargin"
+                android:layout_weight="1"
+                android:background="@drawable/com_facebook_tooltip_black_background"
+                android:onClick="onClickNumber"
+                android:text=")"
+                android:textColor="@color/white"
+                android:textSize="@dimen/textSize" />
+
+            <Button
                 android:id="@+id/btn_plus_or_minus"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
