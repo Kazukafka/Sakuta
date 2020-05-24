@@ -6,6 +6,12 @@
  
 This is demo app for the final project in the class.
 
+# Feedback
+
+Feedback 1: I changed the go to calc button's status as VISIBLE
+
+Feedback 2: To make () function work, I must change from the design concept and my apologies that I misunderstood the requirements. As bonus functions, I made the Timestamp function and Sin Cos Tan, etc. I hope they would recover my failure.
+
 
 # Gradle(Module:app)
 ```
