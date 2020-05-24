@@ -40,7 +40,8 @@ public class MainActivity extends AppCompatActivity {
 
         loginButton = (LoginButton)findViewById(R.id.login_button);
         final Button button = (Button) findViewById(R.id.bbb);
-        button.setVisibility(View.GONE);
+        //button.setVisibility(View.GONE);
+        button.setVisibility(View.VISIBLE);
 
         button.setOnClickListener(new View.OnClickListener() {
             @Override
