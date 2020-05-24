@@ -9,9 +9,9 @@ This is demo app for the final project in the class.
  
 # Author
  
-name:Kazuhisa Noguchi
-belongs:EUAS Software Development 
-email:kazuhisa.noguchi@eek.ee
+Name:Kazuhisa Noguchi,  
+Belongs:EUAS Software Development,  
+Email:kazuhisa.noguchi@eek.ee
 
 
 # Photos
